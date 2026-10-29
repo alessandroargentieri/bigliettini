@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Versetto del momento</title>
+<style>
+  :root { --bg: #faf7f2; --fg: #2b2622; --muted: #7a7168; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1c1a18; --fg: #efe9e1; --muted: #a39a90; } }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--fg); font: 1.25rem/1.6 Georgia, serif; }
+  main { max-width: 34rem; padding: 2rem 16px; text-align: center; }
+  blockquote { margin: 0 0 1rem; }
+  cite { color: var(--muted); font-size: 1rem; font-style: normal; }
+  button { margin-top: 2rem; padding: .6rem 1.2rem; font: 1rem system-ui; border: 1px solid var(--muted); border-radius: 999px; background: none; color: var(--fg); }
+</style>
+</head>
+<body>
+<main>
+  <blockquote id="text">…</blockquote>
+  <cite id="ref"></cite><br>
+  <button id="again">Un altro versetto</button>
+</main>
+<script>
+const API = "https://query.bibleget.io/v3/";
+const BOOKS = [
+  ["Gen",50],["Es",40],["Lv",27],["Nm",36],["Dt",34],["Gs",24],["Gdc",21],["Rt",4],
+  ["1Sam",31],["2Sam",24],["1Re",22],["2Re",25],["1Cr",29],["2Cr",36],["Esd",10],["Ne",13],
+  ["Tb",14],["Gdt",16],["Est",10],["1Mac",16],["2Mac",15],["Gb",42],["Sal",150],["Pr",31],
+  ["Qo",12],["Ct",8],["Sap",19],["Sir",51],["Is",66],["Ger",52],["Lam",5],["Bar",6],
+  ["Ez",48],["Dn",14],["Os",14],["Gl",4],["Am",9],["Abd",1],["Gio",4],["Mi",7],
+  ["Na",3],["Ab",3],["Sof",3],["Ag",2],["Zc",14],["Ml",3],["Mt",28],["Mc",16],
+  ["Lc",24],["Gv",21],["At",28],["Rm",16],["1Cor",16],["2Cor",13],["Gal",6],["Ef",6],
+  ["Fil",4],["Col",4],["1Ts",5],["2Ts",3],["1Tm",6],["2Tm",4],["Tt",3],["Fm",1],
+  ["Eb",13],["Gc",5],["1Pt",5],["2Pt",3],["1Gv",5],["2Gv",1],["3Gv",1],["Gd",1],["Ap",22],
+];
+const CHAPTERS = BOOKS.flatMap(([b, n]) => Array.from({ length: n }, (_, i) => [b, i + 1]));
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+async function randomVerse() {
+  for (let i = 0; i < 5; i++) {
+    const [b, c] = pick(CHAPTERS);
+    try {
+      const r = await fetch(`${API}?query=${b}${c}&version=CEI2008&return=json`);
+      const verses = (await r.json()).results.filter((v) => v.text.trim());
+      if (verses.length) return pick(verses);
+    } catch (_) {}
+  }
+  throw new Error("nessun versetto");
+}
+
+async function show() {
+  const t = document.getElementById("text"), ref = document.getElementById("ref");
+  t.textContent = "…"; ref.textContent = "";
+  try {
+    const v = await randomVerse();
+    t.textContent = v.text;
+    ref.textContent = `${v.book} ${v.chapter},${v.verse} · CEI 2008`;
+  } catch (_) {
+    t.textContent = "Connessione assente, riprova.";
+  }
+}
+document.getElementById("again").onclick = show;
+show();
+</script>
+</body>
+</html>
