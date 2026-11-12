@@ -83,12 +83,25 @@ $("save").onclick = () => {
   refresh();
 };
 $("list").onclick = () => { $("saved").hidden = !$("saved").hidden; };
+function copyText(t) {
+  const a = document.createElement("textarea");
+  a.value = t; a.style.cssText = "position:fixed;opacity:0";
+  document.body.appendChild(a); a.select(); a.setSelectionRange(0, t.length);
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (_) {}
+  a.remove();
+  return ok;
+}
+
 $("share").onclick = async () => {
-  const text = `«${cur[1]}»\n— ${cur[0]} (CEI 2008)`, url = location.href;
-  try {
-    if (navigator.share) await navigator.share({ text, url });
-    else { await navigator.clipboard.writeText(`${text}\n${url}`); say("Copiato negli appunti"); }
-  } catch (e) { if (e.name !== "AbortError") say("Condivisione non riuscita"); }
+  const text = `«${cur[1]}»\n— ${cur[0]} (CEI 2008)`, full = `${text}\n${location.href}`;
+  if (navigator.share) {
+    try { await navigator.share({ text: full }); return; }
+    catch (e) { if (e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(full); say("Copiato negli appunti"); return; } catch (_) {}
+  if (copyText(full)) { say("Copiato negli appunti"); return; }
+  window.prompt("Copia il versetto:", full);
 };
 show();
 </script>
